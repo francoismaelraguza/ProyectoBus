@@ -16,9 +16,11 @@ const estado = {
 const mapa = L.map("mapa", { zoomControl: false, attributionControl: true })
     .setView(CORUNA, 14);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    maxZoom: 19,
-    subdomains: "abcd",
+// Mapa base: CARTO Voyager (raster). La clave es pública: va en cada petición del navegador.
+const CARTO_KEY = "cb1_4zpy_1_06146c6b2dad313543d4c4cf";
+
+L.tileLayer(`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_KEY}`, {
+    maxZoom: 20,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a> · Datos: iTranvías (no oficial)',
 }).addTo(mapa);
 

@@ -120,7 +120,7 @@ html, body {
     inset: 0;
     z-index: 1;
 }
-.leaflet-container { background: #0f1115; font-family: inherit; }
+.leaflet-container { background: #e9e5dc; font-family: inherit; }
 
 .bus-marcador {
     display: grid;
