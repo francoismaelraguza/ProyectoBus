@@ -15,6 +15,7 @@ Hecho con **Spring Boot 4** (backend) y **Leaflet** (mapa).
 - **Parada** (`/?parada=120`): llegadas por línea con los minutos del próximo bus en grande, distancia, última parada por la que pasó y los siguientes buses. Refresco cada 20 s; los buses se dibujan en el mapa y tocar uno lo centra.
 - **Líneas** (`/?vista=lineas`): todas las líneas con su color oficial.
 - **Línea** (`/?linea=1400&sentido=0`): recorrido real por calles, paradas del sentido y «termómetro» con las otras líneas que paran en cada una.
+- **Buses en vivo** en la línea: cada bus se desliza de forma continua por el trazado (sondeo cada 8 s, velocidad estimada a partir de lo recorrido) y aparece también sobre el termómetro. Tocar un bus lo sigue en el mapa (`&bus=395`); desde una parada, cada llegada enlaza al bus de esa línea.
 - Buscador de paradas y líneas (nombre sin acentos o número), con teclado.
 - Favoritas guardadas en el navegador. Diseño claro, panel lateral en escritorio y hoja inferior en móvil.
 
@@ -31,6 +32,7 @@ El backend hace de intermediario porque el navegador no puede llamar directament
 | Catálogo de líneas y paradas | 12 h |
 | Llegadas a una parada | 15 s |
 | Recorrido (paradas y trazado) de una línea | 12 h |
+| Buses de una línea (posición en vivo) | 8 s |
 
 Los tiempos se cambian en `application.properties`.
 
@@ -52,6 +54,7 @@ En IntelliJ: abre la carpeta, espera a que cargue Maven y ejecuta `ProyectoBusAp
 |--------|------|----------|
 | GET | `/api/catalogo` | Líneas (nombre, color, recorridos) y paradas (nombre, coordenadas, líneas) |
 | GET | `/api/paradas/{id}/llegadas` | Buses que llegan a la parada, ordenados por tiempo |
+| GET | `/api/lineas/{id}/buses` | Buses de la línea ahora: sentido, GPS (`lat`/`lng`, puede ser null), última parada, `estado` (0 detenido, 1 en marcha, 17 en cabecera) y `progreso` (0–1) |
 | GET | `/api/lineas/{id}/recorrido` | Por sentido: destino, paradas en orden y trazado `[lat, lng]` por calles (404 si la línea no existe) |
 
 Ejemplo de `/api/paradas/120/llegadas` (Rda. de Outeiro, 126):
@@ -142,6 +145,7 @@ src/main/resources/
         ├── app.js        # router y pestañas (lista de vistas en un solo array)
         ├── api.js, estado.js, geo.js, ui.js
         ├── mapa.js, hoja.js, buscador.js
+        ├── envivo.js     # sondeo y animación de los buses sobre el trazado
         └── vistas/       # inicio, parada, lineas, linea
 ```
 

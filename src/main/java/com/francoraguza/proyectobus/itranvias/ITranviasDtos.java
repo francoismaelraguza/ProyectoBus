@@ -86,7 +86,8 @@ public final class ITranviasDtos {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record MapaBloque(List<SentidoParadasRaw> paradas, List<SentidoRecorridoRaw> recorridos) {
+    public record MapaBloque(List<SentidoParadasRaw> paradas, List<SentidoRecorridoRaw> recorridos,
+                             List<SentidoBusesGpsRaw> buses) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -100,5 +101,39 @@ public final class ITranviasDtos {
     /** recorrido: puntos "lon,lat,0" separados por espacios. */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record SentidoRecorridoRaw(String sentido, String recorrido) {
+    }
+
+    /** mostrar=B: buses con GPS real por sentido (posx = longitud, posy = latitud). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SentidoBusesGpsRaw(String sentido, List<BusGpsRaw> buses) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BusGpsRaw(int bus, double posx, double posy) {
+    }
+
+    // ---------- func=2 (buses de una línea por sentido y última parada) ----------
+
+    /** Se lee como árbol por si algún elemento no es un objeto. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BusesLineaCruda(List<tools.jackson.databind.JsonNode> paradas) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BusesLineaRespuesta(List<SentidoBusesRaw> paradas) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SentidoBusesRaw(String sentido, List<ParadaBusesRaw> paradas) {
+    }
+
+    /** parada = última parada por la que pasaron estos buses. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ParadaBusesRaw(String parada, List<BusLineaRaw> buses) {
+    }
+
+    /** distancia = fracción 0-1 del recorrido completo ya hecho; estado: 0 detenido, 1 en marcha, 17 en cabecera. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BusLineaRaw(int bus, Integer estado, Double distancia) {
     }
 }

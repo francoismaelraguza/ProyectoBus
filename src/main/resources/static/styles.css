@@ -430,3 +430,50 @@ a.fila:active, button.fila:active { background: var(--active); }
 @media (prefers-reduced-motion: reduce) {
     .panel { transition: none; }
 }
+
+/* ---------- Buses en vivo ---------- */
+
+.esq-recuento { display: inline-block; width: 72px; height: 12px; vertical-align: middle; }
+.recuento-n { color: var(--text); font-variant-numeric: tabular-nums; }
+.senal:empty, .seguimiento:empty { display: none; }
+
+/* Marcador en el mapa: círculo del color de la línea con anillo blanco, pictograma y punta de rumbo */
+.marcador-bus-vivo { background: none; border: 0; }
+.bus-vivo { position: relative; display: block; width: 30px; height: 30px; }
+.bus-cuerpo {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: var(--linea); color: var(--tinta-linea); border: 2px solid #ffffff;
+}
+.bus-cuerpo.seguido { outline: 2px solid var(--text); outline-offset: 0; }
+.bus-rumbo { position: absolute; left: -6px; top: -6px; width: 42px; height: 42px; color: var(--linea); transform-origin: 50% 50%; }
+.bus-rumbo svg { display: block; }
+
+/* Bus sobre la espina del termómetro */
+.termo-envoltorio { position: relative; }
+.termo-buses { position: absolute; inset: 0; pointer-events: none; }
+/* Botón de 44 px de alto centrado en la espina (x = 21); el punto visible mide 18 px */
+.bus-termo {
+    position: absolute; left: 1px; top: 0; width: 40px; height: 44px; padding: 0;
+    display: flex; align-items: center; justify-content: center; pointer-events: auto;
+    background: transparent; border: 0; border-radius: var(--radius-control);
+    cursor: pointer; transition: transform 1s linear;
+}
+.bus-termo-punto {
+    box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none;
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ffffff;
+    background: var(--linea); color: var(--tinta-linea);
+}
+.bus-termo[aria-pressed="true"] .bus-termo-punto { outline: 2px solid var(--text); outline-offset: 0; }
+.bus-termo:hover .bus-termo-punto { filter: brightness(0.92); }
+
+/* Bloque del bus seguido */
+.seguimiento-bloque {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    column-gap: var(--gap); padding: 12px 16px;
+}
+.seg-texto { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.seguimiento-bloque .boton-texto { grid-column: 1 / -1; justify-self: start; margin-left: -8px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .bus-termo { transition: none; }
+}

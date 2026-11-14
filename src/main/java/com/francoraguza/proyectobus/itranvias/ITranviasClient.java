@@ -67,6 +67,23 @@ public class ITranviasClient {
         return new MapaRespuesta(cruda.resultado(), bloques);
     }
 
+    /** func=2: buses de la línea por sentido, con su última parada, estado y avance (0-1). */
+    public ITranviasDtos.BusesLineaRespuesta busesLinea(int linea) {
+        var cruda = parsear(get("2", String.valueOf(linea), null), ITranviasDtos.BusesLineaCruda.class);
+        java.util.List<ITranviasDtos.SentidoBusesRaw> sentidos = new java.util.ArrayList<>();
+        if (cruda.paradas() != null) {
+            for (var nodo : cruda.paradas()) {
+                if (nodo == null || !nodo.isObject()) continue;
+                try {
+                    sentidos.add(json.treeToValue(nodo, ITranviasDtos.SentidoBusesRaw.class));
+                } catch (Exception e) {
+                    log.warn("Sentido de buses ignorado: {}", e.getMessage());
+                }
+            }
+        }
+        return new ITranviasDtos.BusesLineaRespuesta(sentidos);
+    }
+
     private <T> T parsear(String body, Class<T> tipo) {
         try {
             return json.readValue(body, tipo);
