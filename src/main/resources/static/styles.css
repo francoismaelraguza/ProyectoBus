@@ -208,6 +208,7 @@ a.fila:active, button.fila:active { background: var(--active); }
 .fila-sub { font-size: 13px; }
 .fila-insignias { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-width: 0; }
 .fila-linea { min-height: 48px; }
+.fila-linea .fila-titulo { flex: 1; min-width: 0; }
 .chevron { flex: none; display: flex; color: var(--muted); }
 
 .cifra-peq { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
