@@ -63,13 +63,42 @@ public final class ITranviasDtos {
     public record LineaLlegadaRaw(int linea, List<BusRaw> buses) {
     }
 
-    /** La API manda tiempo y distancia como texto ("11", "1778"); Jackson los convierte a int. */
+    /** tiempo y distancia llegan como texto y a veces no son números ("--", "<1"): se interpretan en el servicio. */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record BusRaw(
             int bus,
-            int tiempo,
-            int distancia,
+            String tiempo,
+            String distancia,
             int estado,
             @JsonProperty("ult_parada") int ultParada) {
+    }
+
+    // ---------- func=99 (paradas por sentido y recorrido de una línea) ----------
+
+    /** "mapas" es un array de bloques con una sola clave cada uno (paradas, recorridos o buses). */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record MapaRespuesta(String resultado, List<MapaBloque> mapas) {
+    }
+
+    /** Forma cruda: un bloque puede ser un array vacío (sin datos), así que se lee como árbol. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record MapaRespuestaCruda(String resultado, List<tools.jackson.databind.JsonNode> mapas) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record MapaBloque(List<SentidoParadasRaw> paradas, List<SentidoRecorridoRaw> recorridos) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SentidoParadasRaw(String sentido, List<ParadaMapaRaw> paradas) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ParadaMapaRaw(String id, String parada, double posx, double posy) {
+    }
+
+    /** recorrido: puntos "lon,lat,0" separados por espacios. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SentidoRecorridoRaw(String sentido, String recorrido) {
     }
 }
