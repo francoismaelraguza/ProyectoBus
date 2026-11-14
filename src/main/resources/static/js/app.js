@@ -10,6 +10,7 @@ import * as inicio from "./vistas/inicio.js";
 import * as parada from "./vistas/parada.js";
 import * as lineas from "./vistas/lineas.js";
 import * as linea from "./vistas/linea.js";
+import * as ruta from "./vistas/ruta.js";
 
 /**
  * ÚNICO sitio donde se definen vistas y pestañas. Gana la primera que coincide.
@@ -21,6 +22,7 @@ const VISTAS = [
     { id: "parada", coincide: (p) => p.has("parada"), modulo: parada, pestana: "inicio", abreHoja: true },
     { id: "linea", coincide: (p) => p.has("linea"), modulo: linea, pestana: "lineas", abreHoja: true },
     { id: "lineas", coincide: (p) => p.get("vista") === "lineas", modulo: lineas, etiqueta: "Líneas", href: "?vista=lineas", orden: 1 },
+    { id: "ruta", coincide: (p) => p.get("vista") === "ruta", modulo: ruta, etiqueta: "Ruta", href: "?vista=ruta", orden: 2, abreHoja: true },
     { id: "inicio", coincide: () => true, modulo: inicio, etiqueta: "Paradas", href: "/", orden: 0 },
 ];
 
@@ -73,7 +75,7 @@ async function pintar({ reiniciarScroll = true } = {}) {
     const params = new URLSearchParams(location.search);
     const vista = VISTAS.find((v) => v.coincide(params));
     pintarPestanas(vista);
-    document.querySelector("#panel").dataset.detalle = vista.abreHoja ? "1" : "0";
+    document.querySelector("#panel").dataset.detalle = vista.abreHoja && !vista.etiqueta ? "1" : "0";
     if (vista.abreHoja) hoja.subirAlMenosA("medio");
 
     try {

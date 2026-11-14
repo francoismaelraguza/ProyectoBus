@@ -27,3 +27,4 @@ async function pedir(url, { signal } = {}) {
 export const catalogo = (opciones) => pedir("/api/catalogo", opciones);
 export const llegadas = (paradaId, opciones) => pedir(`/api/paradas/${paradaId}/llegadas`, opciones);
 export const recorrido = (lineaId, opciones) => pedir(`/api/lineas/${lineaId}/recorrido`, opciones);
+export const ruta = (origen, destino, opciones) => pedir(`/api/ruta?origen=${origen}&destino=${destino}`, opciones);
