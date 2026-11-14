@@ -20,8 +20,10 @@ Requiere Java 25. No hay `mvnw`; Maven no está en el PATH, se usa el de `~/.m2/
 
 `addResources=true` sirve `src/main/resources/static` en caliente (sin recompilar). Abre <http://localhost:8080>. Tests: `mvn.cmd test`.
 
-Para apuntar el backend a un iTranvías simulado (de noche casi no hay buses):
+De noche casi no hay buses (solo el BUH). Para probar con datos, el backend admite otra URL base, p. ej. un iTranvías simulado local:
 `-Dspring-boot.run.arguments=--itranvias.base-url=http://localhost:9099`
+
+Maven no puede ir en modo offline (`-o`) para `spring-boot:run` la primera vez: tiene que descargar el plugin.
 
 ## Arquitectura
 
@@ -51,6 +53,11 @@ Base `https://itranvias.com/queryitr_v3.php`. Necesita `User-Agent` de navegador
 - El ID interno de línea no es el número × 100 (12A = 1500, BUH = 1800/1801). Traducir siempre con el catálogo.
 - `sentido` llega como texto. Hay sentidos residuales (p. ej. `"30"`) con 2 paradas y sin recorrido: ignorarlos.
 - Sin buses en servicio la respuesta viene sin `lineas` / con `paradas: []`: es un vacío válido, no un error.
+- `func=0` puede traer `"distancia":"--"` (bus que aún no ha salido de cabecera) y `tiempo` como `"--"` o `"<1"`: se leen como texto y se convierten con tolerancia (null = desconocido).
+- `func=99` devuelve `"mapas":[[]]` (un bloque que es un array vacío) cuando no hay datos.
+- `estado`: 0 detenido, 1 en marcha, 16/17 esperando en cabecera. Un bus en cabecera sale en los dos sentidos a la vez.
+- El `sentido` de `func=99 B` numera variantes de ruta (puede ser 2, 3…); el de `func=2` es el 0/1 que coincide con el recorrido. Manda el de `func=2`.
+- Responde 429 si se le llama muy seguido: `ITranviasClient` deja 200 ms entre llamadas.
 - Algunos hostings en la nube reciben 403.
 
 ## Dirección de diseño
@@ -68,11 +75,14 @@ Hoja repartida por `design-taste-frontend` (`draw.mjs --app`, semilla 426413680)
 | Rama | Qué contiene | Estado |
 |---|---|---|
 | `main` | Primera versión (tema oscuro, un solo `app.js`) | Base |
-| `rebuild/interfaz` | Interfaz nueva, recorrido por calles, favoritos, cerca de mí | En curso |
-| `feature/bus-en-vivo` | Buses de la línea moviéndose sobre el recorrido | Pendiente |
-| `feature/planificador-ruta` | Origen + destino → qué buses coger | Pendiente |
+| `rebuild/interfaz` | Interfaz nueva (módulos ES), recorrido por calles (`/api/lineas/{id}/recorrido`), favoritas con llegadas, cerca de ti | Hecho, sin fusionar |
+| `feature/bus-en-vivo` | `/api/lineas/{id}/buses` + `envivo.js`: buses deslizándose por el trazado, seguir un bus | Hecho, sin fusionar |
+| `feature/planificador-ruta` | `/api/ruta` (`PlanificadorService`, Dijkstra con trasbordos y tramos a pie) + pestaña «Ruta» | Hecho, sin fusionar |
+
+Orden de fusión previsto: `rebuild/interfaz` → `main`; después las dos `feature/*` (ambas tocan `mapa.js`, `vistas/parada.js`, `BusController`, `ApiDtos` y `README.md`: habrá conflictos pequeños que resolver a mano en la segunda).
 
 ## Pendiente / ideas
 
-- Averiguar qué significa exactamente `estado` (parece 0 = parado, 1 = en marcha).
+- Planificador: los tiempos de viaje son estimados por distancia (4,5 m/s + 20 s por parada); solo la espera del primer bus es real.
+- Bus en vivo: hasta el segundo sondeo (8 s) el bus no se mueve, porque aún no hay velocidad medida.
 - Desplegarlo (ojo al 403 desde la nube).
