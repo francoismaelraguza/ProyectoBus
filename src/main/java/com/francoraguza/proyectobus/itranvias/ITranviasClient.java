@@ -31,13 +31,13 @@ public class ITranviasClient {
     private final RestClient http;
     private final JsonMapper json;
 
-    public ITranviasClient(@Value("${itranvias.base-url}") String baseUrl, JsonMapper json) {
+    public ITranviasClient(@Value("${itranvias.base-url}") String baseUrl,
+                           @Value("${itranvias.user-agent}") String userAgent,
+                           JsonMapper json) {
         this.json = json;
         this.http = RestClient.builder()
                 .baseUrl(baseUrl)
-                .defaultHeader(HttpHeaders.USER_AGENT,
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36")
-                .defaultHeader(HttpHeaders.REFERER, "https://itranvias.com/")
+                .defaultHeader(HttpHeaders.USER_AGENT, userAgent)
                 .build();
     }
 
