@@ -13,7 +13,7 @@
 
     <groupId>com.francoraguza</groupId>
     <artifactId>proyectobus</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <name>ProyectoBus</name>
     <description>Mapa en tiempo real de los buses urbanos de A Coruña</description>
     <url>https://github.com/francoismaelraguza/ProyectoBus</url>
