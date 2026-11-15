@@ -73,21 +73,22 @@ Hoja repartida por `design-taste-frontend` (`draw.mjs --app`, semilla 426413680)
 
 ## Estado
 
-Repositorio: <https://github.com/francoismaelraguza/ProyectoBus> (público, sin licencia por ahora). Versión en `pom.xml`: 0.1.0; la primera release prevista es la 0.2.0.
+Repositorio: <https://github.com/francoismaelraguza/ProyectoBus> (público, sin licencia por ahora). Versión publicada: **0.2.0** (tag `v0.2.0`, 2026-11-15).
 
 | Rama | Qué contiene | Estado |
 |---|---|---|
-| `main` | Primera versión (tema oscuro, un solo `app.js`) | Publicada, sin tocar |
-| `develop` | Rebuild + buses en vivo + planificador + avisos legales + CI | Integrado y verificado |
-| `rebuild/interfaz`, `feature/bus-en-vivo`, `feature/planificador-ruta`, `feature/flujo-git`, `feature/avisos-legales`, `feature/seguimiento` | Ya fusionadas en `develop` (PR 1 a 6) | Borrar tras la release 0.2.0 |
+| `main` | Versión 0.2.0: rebuild, buses en vivo, planificador de ruta, avisos legales | Publicada |
+| `develop` | Igual que `main` tras devolver la release | Lista para nuevas `feature/*` |
 
-### Release pendiente (0.2.0)
+Las ramas de la 0.2.0 (`rebuild/interfaz` y sus `feature/*`) se borraron tras la release; su historial está en los merges de `develop`.
 
-1. `release/0.2.0` desde `develop`: subir `pom.xml` a 0.2.0.
-2. PR `release/0.2.0` → `main` con merge commit.
-3. Tag anotado `v0.2.0` en `main` y `gh release create v0.2.0`.
+### Cómo se hace una release
+
+1. `release/X.Y.Z` desde `develop`: subir la versión en `pom.xml` y actualizar esta sección.
+2. PR `release/X.Y.Z` → `main` con merge commit.
+3. Tag anotado `vX.Y.Z` en `main` y `gh release create vX.Y.Z`.
 4. PR `main` → `develop` para devolver la release.
-5. Borrar `release/0.2.0` y las ramas ya integradas (local y remoto).
+5. Borrar `release/X.Y.Z` y las `feature/*` ya integradas (local y remoto).
 
 ## Avisos legales (decisiones tomadas)
 
