@@ -35,7 +35,9 @@ export function montar({ contenedor, params }) {
         </div>
         <div class="tarjeta" id="llegadas" aria-live="polite">${esqueletoFilas(3)}</div>
         ${lineas.length ? `<section class="seccion"><h2>Líneas en esta parada</h2>
-        <div class="lineas-parada">${lineas.map((l) => `<a class="enlace-insignia" href="?linea=${Number(l.id)}" aria-label="Línea ${esc(l.nombre)}">${insignia(l)}</a>`).join("")}</div></section>` : ""}`;
+        <div class="lineas-parada">${lineas.map((l) => `<a class="enlace-insignia" href="?linea=${Number(l.id)}" aria-label="Línea ${esc(l.nombre)}">${insignia(l)}</a>`).join("")}</div></section>` : ""}
+        <section class="seccion" aria-labelledby="h-ruta"><h2 id="h-ruta">Planear ruta</h2>
+        <div class="acciones-ruta"><a class="boton" href="?vista=ruta&amp;origen=${id}">Salir desde aquí</a><a class="boton" href="?vista=ruta&amp;destino=${id}">Llegar aquí</a></div></section>`;
 
     const cuerpo = contenedor.querySelector("#llegadas");
     const etiqueta = contenedor.querySelector("#actualizado");

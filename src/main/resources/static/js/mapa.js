@@ -16,6 +16,11 @@ let alArrastrarMapa = null;
 let capaResalte;
 let capaUsuario;
 let alClicParada = () => {};
+let interceptorClicParada = null;
+let capaItinerario;
+let itinerarioVisible = false;
+let forzarParadas = false;
+let recorridoVisible = false;
 let obtenerRelleno = () => 0;
 
 const posiciones = new Map();      // id de parada -> [lat, lng]
@@ -90,7 +95,10 @@ function crearMarcadorParada(p) {
         fillOpacity: 1,
     });
     m.bindTooltip(esc(p.nombre), { direction: "top", offset: [0, -4] });
-    m.on("click", () => alClicParada(p.id));
+    m.on("click", () => {
+        if (interceptorClicParada?.(p.id)) return;
+        alClicParada(p.id);
+    });
     posiciones.set(p.id, [p.lat, p.lng]);
     marcadores.push(m);
     return m;
@@ -108,7 +116,8 @@ export function pintarParadas(paradas) {
  */
 export function mostrarRecorrido({ color, trazado, paradas = [], ajustar = true }) {
     limpiarRecorrido(false);
-    mapa.removeLayer(capaParadas);
+    recorridoVisible = true;
+    actualizarCapaParadas();
     const c = colorSeguro(color);
     const base = { lineCap: "round", lineJoin: "round", interactive: false };
     capaRecorrido.addLayer(L.polyline(trazado, { ...base, color: "#ffffff", weight: 8, opacity: 1 }));
@@ -120,7 +129,10 @@ export function mostrarRecorrido({ color, trazado, paradas = [], ajustar = true 
 /** Quita el recorrido y devuelve el mapa a la vista con todas las paradas. */
 export function limpiarRecorrido(restaurar = true) {
     capaRecorrido.clearLayers();
-    if (restaurar && !mapa.hasLayer(capaParadas)) capaParadas.addTo(mapa);
+    if (restaurar) {
+        recorridoVisible = false;
+        actualizarCapaParadas();
+    }
 }
 
 /** Resalta una parada (más grande, anillo en tinta). null quita el resalte. */
@@ -182,6 +194,86 @@ export function volarA(latlng, zoom) {
 export function invalidarTamano() {
     mapa?.invalidateSize();
 }
+
+// ---------- Itinerario del planificador de rutas ----------
+
+/**
+ * Mientras haya un interceptor, pulsar una parada llama a fn(id); si devuelve true
+ * no se abre la parada. null lo quita.
+ */
+export function interceptarClicParada(fn) {
+    interceptorClicParada = fn;
+}
+
+function marcadorItinerario(parada, opciones) {
+    const m = L.circleMarker([parada.lat, parada.lng], { bubblingMouseEvents: false, ...opciones });
+    m.bindTooltip(esc(parada.nombre), { direction: "top", offset: [0, -6] });
+    return m;
+}
+
+/**
+ * Dibuja un itinerario: tramos en bus con el color de su línea (5 sobre borde blanco de 8),
+ * tramos a pie discontinuos en tinta, salida (anillo hueco), llegada (punto relleno) y las
+ * paradas de subida/bajada resaltadas. ajustar=false conserva el encuadre (refrescos).
+ */
+export function mostrarItinerario(itinerario, { ajustar = true, origen = null, destino = null } = {}) {
+    if (!capaItinerario) capaItinerario = L.layerGroup().addTo(mapa);
+    capaItinerario.clearLayers();
+    itinerarioVisible = true;
+    actualizarCapaParadas();
+    const tramos = itinerario?.tramos ?? [];
+    const puntos = [];
+    const base = { lineCap: "round", lineJoin: "round", interactive: false };
+
+    for (const t of tramos) {
+        const trazado = t.trazado ?? [];
+        if (trazado.length < 2) continue;
+        puntos.push(...trazado);
+        if (t.tipo === "bus") {
+            capaItinerario.addLayer(L.polyline(trazado, { ...base, color: "#ffffff", weight: 8, opacity: 1 }));
+            capaItinerario.addLayer(L.polyline(trazado, { ...base, color: colorSeguro(t.color), weight: 5, opacity: 1 }));
+        } else {
+            capaItinerario.addLayer(L.polyline(trazado, { ...base, lineCap: "butt", color: TINTA, weight: 4, opacity: 1, dashArray: "8 8" }));
+        }
+    }
+    for (const t of tramos) {
+        if (t.tipo !== "bus") continue;
+        for (const p of [t.desde, t.hasta]) {
+            capaItinerario.addLayer(marcadorItinerario(p, { radius: 6, color: TINTA, weight: 2.5, fillColor: "#ffffff", fillOpacity: 1 }));
+        }
+    }
+    if (tramos.length) {
+        // Salida y llegada son las paradas elegidas, aunque el bus empiece/termine en otra cercana
+        const salida = origen ?? tramos[0].desde;
+        const llegada = destino ?? tramos[tramos.length - 1].hasta;
+        capaItinerario.addLayer(marcadorItinerario(salida, { radius: 8, color: TINTA, weight: 3, fillColor: "#ffffff", fillOpacity: 1 }));
+        capaItinerario.addLayer(marcadorItinerario(llegada, { radius: 8, color: "#ffffff", weight: 3, fillColor: TINTA, fillOpacity: 1 }));
+        puntos.push([salida.lat, salida.lng], [llegada.lat, llegada.lng]);
+    }
+    if (ajustar && puntos.length) ajustarA(L.latLngBounds(puntos));
+}
+
+export function limpiarItinerario() {
+    capaItinerario?.clearLayers();
+    itinerarioVisible = false;
+    forzarParadas = false;
+    actualizarCapaParadas();
+}
+
+/** Con itinerario visible solo se ven sus paradas; true vuelve a mostrar todas (elegir en el mapa). */
+export function mostrarTodasParadas(visibles) {
+    forzarParadas = visibles;
+    actualizarCapaParadas();
+}
+
+function actualizarCapaParadas() {
+    // El recorrido de una línea siempre oculta el resto; el itinerario lo permite si se piden todas
+    const ocultar = recorridoVisible || (itinerarioVisible && !forzarParadas);
+    if (ocultar && mapa.hasLayer(capaParadas)) mapa.removeLayer(capaParadas);
+    else if (!ocultar && !mapa.hasLayer(capaParadas)) capaParadas.addTo(mapa);
+}
+
+// ---------- Buses en vivo ----------
 
 /** Registra (o quita, con null) lo que ocurre cuando el usuario arrastra el mapa. */
 export function alArrastrar(fn) {

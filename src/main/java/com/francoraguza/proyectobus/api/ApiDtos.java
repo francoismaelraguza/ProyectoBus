@@ -45,6 +45,31 @@ public final class ApiDtos {
     public record ParadaRecorrido(int id, String nombre, double lat, double lng) {
     }
 
+    // ---------------- Planificador de rutas ----------------
+
+    public record ParadaRef(int id, String nombre, double lat, double lng) {
+    }
+
+    /** Respuesta de /api/ruta: itinerarios ordenados por tiempo (lista vacía si no hay combinación). */
+    public record PlanRuta(ParadaRef origen, ParadaRef destino, String consultado, List<Itinerario> itinerarios) {
+    }
+
+    public record Itinerario(int minutos, int trasbordos, int metrosAndando, List<Tramo> tramos) {
+    }
+
+    /**
+     * Un tramo del itinerario. tipo = "bus" | "andar". En los tramos a pie, lineaId/lineaNombre/color/hacia
+     * son null. hacia = última parada de la ruta del bus. minutos = tiempo del tramo (sin la espera).
+     * esperaMin = minutos hasta el próximo bus (solo en el primer tramo en bus; null si no se sabe).
+     * trazado = lista de [lat, lng] para dibujar el tramo.
+     */
+    public record Tramo(String tipo, Integer lineaId, String lineaNombre, String color, String hacia,
+                        ParadaRef desde, ParadaRef hasta, int paradas, int metros, int minutos,
+                        Integer esperaMin, List<double[]> trazado) {
+    }
+
+    // ---------------- Buses en vivo ----------------
+
     public record BusesLinea(int linea, String consultado, List<BusEnVivo> buses) {
     }
 

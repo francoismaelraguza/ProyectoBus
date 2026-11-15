@@ -1,0 +1,99 @@
+/* Planificador de rutas. Usa los tokens de styles.css; el único color es el de cada línea. */
+
+/* ---------- Formulario ---------- */
+
+
+.campo { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.campo-etiqueta { font-size: 13px; font-weight: 500; color: var(--muted); }
+.campo-control { position: relative; }
+
+.campo-entrada {
+    flex: 1; min-width: 0; height: var(--control-height); padding: 0 12px;
+    background: var(--surface); border: 1px solid var(--control); border-radius: var(--radius-control);
+    text-overflow: ellipsis; -webkit-appearance: none; appearance: none;
+}
+.campo-entrada::placeholder { color: var(--muted); opacity: 1; }
+.campo-entrada:hover { border-color: var(--muted); }
+.campo-eligiendo .campo-entrada { border-color: var(--text); }
+.campo-con-error .campo-entrada { border-color: var(--negative); }
+
+.campo .campo-mapa[aria-pressed="true"] { background: var(--active); }
+
+.campo-ayuda, .campo-error { font-size: 13px; }
+.campo-ayuda { color: var(--muted); }
+.campo-error { color: var(--pill-negative-ink); }
+
+/* Lista de paradas: reutiliza el aspecto de los resultados del buscador, anclada al campo */
+.campo-lista { left: 0; right: 0; top: calc(var(--control-height) + 4px); max-height: min(50dvh, 360px); }
+.campo-lista [role="option"] {
+    display: flex; align-items: center; gap: var(--gap); min-height: 48px; padding: 6px 14px; cursor: pointer;
+}
+
+.ruta-intercambio .boton-icono { width: var(--control-height); height: var(--control-height); }
+
+.ruta-form .boton-primario { min-height: var(--control-height); }
+
+/* ---------- Resultados ---------- */
+
+.ruta-resultados { display: flex; flex-direction: column; gap: var(--gap); }
+.ruta-opciones { display: flex; flex-direction: column; gap: 8px; }
+
+.ruta-opcion {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card);
+}
+.ruta-opcion.seleccionada { border-color: var(--text); }
+
+.ruta-resumen {
+    display: flex; align-items: center; gap: var(--gap);
+    min-height: 64px; padding: 12px 16px; border-radius: 7px; cursor: pointer;
+}
+.ruta-resumen:hover { background: var(--ground); }
+.ruta-resumen:focus-visible { outline-offset: -2px; }
+.ruta-info { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 4px; }
+.ruta-secuencia { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ruta-andar { display: inline-flex; align-items: center; color: var(--text); }
+
+.ruta-nota { font-size: var(--fs-small); color: var(--muted); }
+
+/* Pasos del itinerario seleccionado */
+.ruta-pasos { padding: 4px 16px 12px 18px; border-top: 1px solid var(--rule); }
+.ruta-pasos[hidden] { display: none; }
+
+.paso { position: relative; padding: 8px 0 8px 28px; }
+.paso p { overflow-wrap: anywhere; }
+.paso-sub { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.paso::after {
+    content: ""; position: absolute; left: 2px; top: 12px; width: 12px; height: 12px;
+    border-radius: 50%; background: #ffffff; border: 2px solid var(--text);
+}
+.paso-sube::after, .paso-baja::after { border-color: var(--linea); }
+.paso-sube::before, .paso-baja::before {
+    content: ""; position: absolute; left: 6px; width: 4px; background: var(--linea);
+}
+.paso-sube::before { top: 18px; bottom: 0; }
+.paso-baja::before { top: 0; height: 18px; }
+
+.paso-linea {
+    position: relative; display: inline-flex; vertical-align: middle; border-radius: var(--radius-control);
+}
+/* Área táctil de 44 px sin agrandar la insignia */
+.paso-linea::after { content: ""; position: absolute; inset: -12px -6px; }
+
+.acciones-ruta { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Rejilla compacta: campos a la izquierda, «Intercambiar» a la derecha ---------- */
+
+.ruta-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 4px; row-gap: 8px; }
+.ruta-campos { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ruta-intercambio { grid-column: 2; grid-row: 1; align-self: center; }
+.ruta-form .boton-primario { grid-column: 1 / -1; }
+.campo { gap: 4px; }
+
+/* «Elegir en el mapa» dentro del campo, a la derecha */
+.campo-entrada { width: 100%; padding-right: 48px; }
+.campo .campo-mapa { position: absolute; right: 0; top: 0; width: 44px; height: var(--control-height); }
+
+@media (max-width: 899.98px) {
+    .panel-ruta .buscador { display: none; }
+    .panel-ruta .vista { gap: 8px; padding-top: 4px; padding-bottom: 8px; }
+}
