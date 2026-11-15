@@ -218,4 +218,4 @@ El proyecto sigue Git Flow con pull requests:
 
 ## Autor
 
-Franco Raguza (Pepe) — alumno de DAW en el CIFP Ánxel Casal.
+Franco Ismael Raguza — alumno de DAW.
