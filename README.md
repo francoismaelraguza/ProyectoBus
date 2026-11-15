@@ -1,14 +1,14 @@
-# 🚌 ProyectoBus
+# ProyectoBus
 
 Mapa web en tiempo real de los buses urbanos de **A Coruña**. Muestra las paradas y recorridos de cada línea y, al tocar una parada, cuánto le falta a cada bus para llegar y por dónde va.
 
 Hecho con **Spring Boot 4** (backend) y **Leaflet** (mapa).
 
-> ⚠️ Proyecto personal y educativo. Usa la API **no oficial** que emplea la app iTranvías. No está afiliado a la Compañía de Tranvías de La Coruña ni al Concello. La API puede cambiar o dejar de funcionar sin aviso.
+> Proyecto personal y educativo, **no oficial**: sin relación con la Compañía de Tranvías de La Coruña ni con el Concello. Usa la API no oficial de iTranvías, que puede cambiar o dejar de funcionar sin aviso. Ver [Aviso legal y uso de datos](#aviso-legal-y-uso-de-datos).
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 - Mapa con todas las paradas en servicio (las que no tienen líneas asignadas se ocultan); tocar una abre la parada.
 - **Paradas**: favoritas con sus próximas llegadas en vivo (se refrescan cada 30 s) y «Cerca de ti» con la geolocalización del navegador.
@@ -20,7 +20,7 @@ Hecho con **Spring Boot 4** (backend) y **Leaflet** (mapa).
 - Buscador de paradas y líneas (nombre sin acentos o número), con teclado.
 - Favoritas guardadas en el navegador. Diseño claro, panel lateral en escritorio y hoja inferior en móvil.
 
-## 🧱 Arquitectura
+## Arquitectura
 
 ```
 Navegador (Leaflet)  ──►  Spring Boot (/api)  ──►  itranvias.com/queryitr_v3.php
@@ -37,7 +37,7 @@ El backend hace de intermediario porque el navegador no puede llamar directament
 
 Los tiempos se cambian en `application.properties`.
 
-## 🚀 Cómo arrancarlo
+## Cómo arrancarlo
 
 Requisitos: **Java 25** y Maven (o IntelliJ, que ya lo trae).
 
@@ -49,7 +49,7 @@ Abre <http://localhost:8080>.
 
 En IntelliJ: abre la carpeta, espera a que cargue Maven y ejecuta `ProyectoBusApplication`.
 
-## 🔌 Endpoints propios
+## Endpoints propios
 
 | Método | Ruta | Devuelve |
 |--------|------|----------|
@@ -104,7 +104,7 @@ Se calcula la mejor opción y después se repite prohibiendo, de una en una, cad
 
 `minutos` de un tramo es solo el trayecto (sin la espera); el total del itinerario sí la incluye. Sin combinación posible devuelve `itinerarios: []`. Los tiempos son una estimación, no un horario.
 
-## 📡 La API de iTranvías (no oficial)
+## La API de iTranvías (no oficial)
 
 Base: `https://itranvias.com/queryitr_v3.php`
 
@@ -152,7 +152,18 @@ Siempre hay que traducirlo con el catálogo.
 
 > El `dato` es el **ID** de la parada, no el número de la calle: "Rda. de Outeiro, 126" es la parada **120**.
 
-## 📁 Estructura
+## Aviso legal y uso de datos
+
+- **No oficial ni afiliado.** ProyectoBus es un proyecto personal, educativo y sin ánimo de lucro. No tiene relación, patrocinio ni aprobación de la Compañía de Tranvías de La Coruña, S.A. ni del Concello da Coruña. «iTranvías» se menciona solo para indicar el origen de los datos.
+- **Los datos son de su titular.** Líneas, paradas, tiempos y posiciones pertenecen a sus titulares; este proyecto no concede ningún derecho sobre ellos y no garantiza su exactitud ni disponibilidad.
+- **Uso responsable de la API.** Cachés: catálogo y recorridos 12 h, llegadas 15 s, buses de línea 8 s; 200 ms mínimo entre llamadas; el backend se identifica con su propio `User-Agent` (`itranvias.user-agent`, sin `Referer`).
+- **Antes de publicarlo.** El aviso legal de Tranvías exige autorización previa para reproducir sus contenidos y prohíbe el uso comercial, así que antes de desplegarlo para el público hay que pedir permiso.
+- **Mapa.** Teselas de CARTO con clave propia: uso no comercial y atribución obligatoria (© OpenStreetMap, © CARTO).
+- **Privacidad.** Sin cookies, analítica ni registro. Las favoritas se guardan solo en el navegador; la ubicación se usa únicamente en el navegador y no se envía a ningún servidor. CARTO recibe la IP al servir las imágenes del mapa.
+- **Terceros incluidos en el repositorio.** Leaflet (BSD-2-Clause, `src/main/resources/static/vendor/leaflet/LICENSE`) y Geist (SIL OFL 1.1, `src/main/resources/static/fuentes/OFL.txt`).
+- **Licencia:** este repositorio no tiene licencia de código abierto por ahora; todos los derechos reservados.
+
+## Estructura
 
 ```
 src/main/java/com/francoraguza/proyectobus/
@@ -169,17 +180,19 @@ src/main/resources/
 ├── application.properties
 └── static/             # Frontend sin build: HTML + CSS + módulos ES + Leaflet
     ├── index.html, styles.css, ruta.css
+    ├── vendor/leaflet/   # Leaflet 1.9.4 auto-alojado (BSD-2-Clause, con su LICENSE)
+    ├── fuentes/          # Geist (woff2 latin y latin-ext) y su licencia OFL.txt
     └── js/
         ├── app.js        # router y pestañas (lista de vistas en un solo array)
         ├── api.js, estado.js, geo.js, ui.js
         ├── mapa.js, hoja.js, buscador.js
         ├── envivo.js     # sondeo y animación de los buses sobre el trazado
         ├── selector-parada.js, iconos-ruta.js   # combobox de paradas reutilizable e iconos del planificador
-        └── vistas/       # inicio, parada, lineas, linea, ruta
+        └── vistas/       # inicio, parada, lineas, linea, ruta, aviso (aviso legal, sin pestaña)
 src/test/java/…/api/PlanificadorServiceTest.java   # pruebas del planificador con un catálogo sintético
 ```
 
-## 🗺️ Ideas para seguir
+## Ideas para seguir
 
 - [ ] Situar el bus entre paradas usando la `distancia` sobre el recorrido (p. ej. con `turf.along`), en vez de sobre su última parada.
 - [ ] Ver todos los buses de una línea a la vez (la app oficial tiene una función de "línea" con el diagrama de buses).
@@ -187,6 +200,6 @@ src/test/java/…/api/PlanificadorServiceTest.java   # pruebas del planificador 
 - [ ] Atajo de Siri: `GET /api/paradas/120/llegadas` → leer en voz alta el próximo 14.
 - [ ] Desplegarlo (ojo: algunos hostings en la nube reciben 403 de iTranvías).
 
-## 👤 Autor
+## Autor
 
 Franco Raguza (Pepe) — alumno de DAW en el CIFP Ánxel Casal.

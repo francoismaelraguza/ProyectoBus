@@ -16,6 +16,12 @@
     <version>0.1.0</version>
     <name>ProyectoBus</name>
     <description>Mapa en tiempo real de los buses urbanos de A Coruña</description>
+    <url>https://github.com/francoismaelraguza/ProyectoBus</url>
+    <developers>
+        <developer>
+            <name>Franco Raguza</name>
+        </developer>
+    </developers>
 
     <properties>
         <java.version>25</java.version>
