@@ -10,14 +10,13 @@ Hecho con **Spring Boot 4** (backend) y **Leaflet** (mapa).
 
 ## ✨ Funcionalidades
 
-- Mapa con todas las paradas en servicio (las que no tienen líneas asignadas se ocultan).
-- Selector de líneas con su color oficial: dibuja el recorrido y filtra sus paradas.
-- Al tocar una parada: llegadas por línea con **minutos**, **metros** y **última parada** por la que pasó cada bus.
-- Los buses aparecen en el mapa sobre su última parada; tocar un bus en la lista centra el mapa en él.
-- Refresco automático cada 20 s.
-- Buscador de paradas por nombre o número.
-- Paradas favoritas (se guardan en el navegador) y enlace directo: `/?parada=120`.
-- Diseño oscuro pensado para móvil.
+- Mapa con todas las paradas en servicio (las que no tienen líneas asignadas se ocultan); tocar una abre la parada.
+- **Paradas**: favoritas con sus próximas llegadas en vivo (se refrescan cada 30 s) y «Cerca de ti» con la geolocalización del navegador.
+- **Parada** (`/?parada=120`): llegadas por línea con los minutos del próximo bus en grande, distancia, última parada por la que pasó y los siguientes buses. Refresco cada 20 s; los buses se dibujan en el mapa y tocar uno lo centra.
+- **Líneas** (`/?vista=lineas`): todas las líneas con su color oficial.
+- **Línea** (`/?linea=1400&sentido=0`): recorrido real por calles, paradas del sentido y «termómetro» con las otras líneas que paran en cada una.
+- Buscador de paradas y líneas (nombre sin acentos o número), con teclado.
+- Favoritas guardadas en el navegador. Diseño claro, panel lateral en escritorio y hoja inferior en móvil.
 
 ## 🧱 Arquitectura
 
@@ -31,6 +30,7 @@ El backend hace de intermediario porque el navegador no puede llamar directament
 |------|-------|
 | Catálogo de líneas y paradas | 12 h |
 | Llegadas a una parada | 15 s |
+| Recorrido (paradas y trazado) de una línea | 12 h |
 
 Los tiempos se cambian en `application.properties`.
 
@@ -52,6 +52,7 @@ En IntelliJ: abre la carpeta, espera a que cargue Maven y ejecuta `ProyectoBusAp
 |--------|------|----------|
 | GET | `/api/catalogo` | Líneas (nombre, color, recorridos) y paradas (nombre, coordenadas, líneas) |
 | GET | `/api/paradas/{id}/llegadas` | Buses que llegan a la parada, ordenados por tiempo |
+| GET | `/api/lineas/{id}/recorrido` | Por sentido: destino, paradas en orden y trazado `[lat, lng]` por calles (404 si la línea no existe) |
 
 Ejemplo de `/api/paradas/120/llegadas` (Rda. de Outeiro, 126):
 
@@ -135,14 +136,19 @@ src/main/java/com/francoraguza/proyectobus/
     └── BusController.java
 src/main/resources/
 ├── application.properties
-└── static/             # Frontend: index.html, styles.css, app.js (Leaflet)
+└── static/             # Frontend sin build: HTML + CSS + módulos ES + Leaflet
+    ├── index.html, styles.css
+    └── js/
+        ├── app.js        # router y pestañas (lista de vistas en un solo array)
+        ├── api.js, estado.js, geo.js, ui.js
+        ├── mapa.js, hoja.js, buscador.js
+        └── vistas/       # inicio, parada, lineas, linea
 ```
 
 ## 🗺️ Ideas para seguir
 
 - [ ] Situar el bus entre paradas usando la `distancia` sobre el recorrido (p. ej. con `turf.along`), en vez de sobre su última parada.
 - [ ] Ver todos los buses de una línea a la vez (la app oficial tiene una función de "línea" con el diagrama de buses).
-- [ ] Botón "paradas cerca de mí" con la geolocalización del navegador.
 - [ ] Averiguar qué significa exactamente `estado`.
 - [ ] Atajo de Siri: `GET /api/paradas/120/llegadas` → leer en voz alta el próximo 14.
 - [ ] Desplegarlo (ojo: algunos hostings en la nube reciben 403 de iTranvías).
