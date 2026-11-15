@@ -67,4 +67,18 @@ public final class ApiDtos {
                         ParadaRef desde, ParadaRef hasta, int paradas, int metros, int minutos,
                         Integer esperaMin, List<double[]> trazado) {
     }
+
+    // ---------------- Buses en vivo ----------------
+
+    public record BusesLinea(int linea, String consultado, List<BusEnVivo> buses) {
+    }
+
+    /**
+     * Un bus de la línea. lat/lng: GPS real (null si no está localizado).
+     * ultParadaId: última parada por la que pasó. estado: 0 detenido, 1 en marcha, 17 en cabecera.
+     * progreso: fracción 0-1 del recorrido de su sentido ya hecha.
+     */
+    public record BusEnVivo(int bus, int sentido, Double lat, Double lng, Integer ultParadaId,
+                            Integer estado, Double progreso) {
+    }
 }

@@ -1,6 +1,7 @@
 package com.francoraguza.proyectobus.api;
 
 import com.francoraguza.proyectobus.api.ApiDtos.Catalogo;
+import com.francoraguza.proyectobus.api.ApiDtos.BusesLinea;
 import com.francoraguza.proyectobus.api.ApiDtos.LlegadasParada;
 import com.francoraguza.proyectobus.api.ApiDtos.PlanRuta;
 import com.francoraguza.proyectobus.api.ApiDtos.RecorridoLinea;
@@ -44,5 +45,11 @@ public class BusController {
     @GetMapping("/ruta")
     public PlanRuta ruta(@RequestParam int origen, @RequestParam int destino) {
         return planificador.planificar(origen, destino);
+    }
+
+    /** Buses de una línea ahora mismo: GPS, última parada, estado y avance. */
+    @GetMapping("/lineas/{id}/buses")
+    public BusesLinea buses(@PathVariable int id) {
+        return service.busesLinea(id);
     }
 }

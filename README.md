@@ -16,6 +16,7 @@ Hecho con **Spring Boot 4** (backend) y **Leaflet** (mapa).
 - **Líneas** (`/?vista=lineas`): todas las líneas con su color oficial.
 - **Línea** (`/?linea=1400&sentido=0`): recorrido real por calles, paradas del sentido y «termómetro» con las otras líneas que paran en cada una.
 - **Ruta** (`/?vista=ruta&origen=120&destino=45`): eliges parada de salida y de llegada y la web te dice qué buses coger, directo o con hasta 2 trasbordos, con tiempos aproximados. Hasta 3 alternativas (otras líneas, o solo andando si están a menos de 1 km), la espera real del primer bus y el recorrido dibujado en el mapa. Las paradas se escriben en el campo o se eligen pulsando en el mapa. Desde una parada hay atajos «Salir desde aquí» / «Llegar aquí».
+- **Buses en vivo** en la línea: cada bus se desliza de forma continua por el trazado (sondeo cada 8 s, velocidad estimada a partir de lo recorrido) y aparece también sobre el termómetro. Tocar un bus lo sigue en el mapa (`&bus=395`); desde una parada, cada llegada enlaza al bus de esa línea.
 - Buscador de paradas y líneas (nombre sin acentos o número), con teclado.
 - Favoritas guardadas en el navegador. Diseño claro, panel lateral en escritorio y hoja inferior en móvil.
 
@@ -32,6 +33,7 @@ El backend hace de intermediario porque el navegador no puede llamar directament
 | Catálogo de líneas y paradas | 12 h |
 | Llegadas a una parada | 15 s |
 | Recorrido (paradas y trazado) de una línea | 12 h |
+| Buses de una línea (posición en vivo) | 8 s |
 
 Los tiempos se cambian en `application.properties`.
 
@@ -53,6 +55,7 @@ En IntelliJ: abre la carpeta, espera a que cargue Maven y ejecuta `ProyectoBusAp
 |--------|------|----------|
 | GET | `/api/catalogo` | Líneas (nombre, color, recorridos) y paradas (nombre, coordenadas, líneas) |
 | GET | `/api/paradas/{id}/llegadas` | Buses que llegan a la parada, ordenados por tiempo |
+| GET | `/api/lineas/{id}/buses` | Buses de la línea ahora: sentido, GPS (`lat`/`lng`, puede ser null), última parada, `estado` (0 detenido, 1 en marcha, 17 en cabecera) y `progreso` (0–1) |
 | GET | `/api/lineas/{id}/recorrido` | Por sentido: destino, paradas en orden y trazado `[lat, lng]` por calles (404 si la línea no existe) |
 | GET | `/api/ruta?origen={idParada}&destino={idParada}` | Itinerarios para ir de una parada a otra (ver abajo). 400 si falta un parámetro o son la misma parada; 404 si una parada no existe |
 
@@ -170,6 +173,7 @@ src/main/resources/
         ├── app.js        # router y pestañas (lista de vistas en un solo array)
         ├── api.js, estado.js, geo.js, ui.js
         ├── mapa.js, hoja.js, buscador.js
+        ├── envivo.js     # sondeo y animación de los buses sobre el trazado
         ├── selector-parada.js, iconos-ruta.js   # combobox de paradas reutilizable e iconos del planificador
         └── vistas/       # inicio, parada, lineas, linea, ruta
 src/test/java/…/api/PlanificadorServiceTest.java   # pruebas del planificador con un catálogo sintético

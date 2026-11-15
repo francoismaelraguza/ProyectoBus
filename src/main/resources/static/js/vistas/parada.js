@@ -4,7 +4,6 @@ import * as api from "../api.js";
 import { alternarFavorita, datos, destinoHacia, esFavorita, lineasDeParada } from "../estado.js";
 import { distancia, entero, esc, esqueletoFilas, icono, insignia, NBSP } from "../ui.js";
 import * as mapa from "../mapa.js";
-import * as hoja from "../hoja.js";
 
 const REFRESCO_MS = 20_000;
 
@@ -93,13 +92,6 @@ export function montar({ contenedor, params }) {
             refrescar();
             return;
         }
-        const fila = e.target.closest("[data-i]");
-        if (!fila || !ultimo) return;
-        const linea = ultimo.lineas.filter((l) => l.buses.length)[Number(fila.dataset.i)];
-        const bus = linea?.buses[0];
-        if (bus?.lat == null) return;
-        hoja.bajarComoMuchoA("medio");
-        mapa.volarA([bus.lat, bus.lng]);
     });
     btnAct.addEventListener("click", refrescar);
 
@@ -137,7 +129,9 @@ function filaLlegada(l, i, paradaId) {
     else cifra = `<span class="cifra"><span class="cifra-num">${min === 0 ? "&lt;1" : entero(min)}</span><span class="cifra-unidad">${NBSP}min</span></span>`;
     const por = proximo.ultParadaNombre ? `va por ${esc(proximo.ultParadaNombre)}` : null;
     const sub = [dist == null ? "aún no ha salido" : distancia(dist), por].filter(Boolean).join(" · ");
-    return `<button type="button" class="fila fila-llegada" data-i="${i}">
+    const dicho = enParada ? ", en parada" : min == null ? "" : `, ${entero(min)} ${min === 1 ? "minuto" : "minutos"}`;
+    const etiqueta = `Línea ${l.nombre}${destino ? ` hacia ${destino}` : ""}${dicho}. Ver el bus en el mapa`;
+    return `<a class="fila fila-llegada" href="?linea=${Number(l.id)}&amp;bus=${Number(proximo.bus)}" aria-label="${esc(etiqueta)}">
         ${insignia(l)}
         <span class="fila-texto">
             <span class="fila-titulo truncar">${destino ? `hacia ${esc(destino)}` : `Línea ${esc(l.nombre)}`}</span>
@@ -147,5 +141,5 @@ function filaLlegada(l, i, paradaId) {
             ${cifra}
             ${despues.length ? `<span class="fila-sub">después ${despues.join(" y ")}${NBSP}min</span>` : ""}
         </span>
-    </button>`;
+    </a>`;
 }

@@ -1,6 +1,6 @@
 // Mapa Leaflet: capas, paradas, recorrido y marcadores. Las vistas solo llaman a estas funciones.
 
-import { esc, insignia, colorSeguro } from "./ui.js";
+import { esc, icono, insignia, colorSeguro, tintaSobre } from "./ui.js";
 
 const CORUNA = [43.3623, -8.4115];
 // Clave pública de CARTO: va en cada petición del navegador.
@@ -11,6 +11,8 @@ let mapa;
 let capaParadas;
 let capaRecorrido;
 let capaBuses;
+let capaBusesVivo;
+let alArrastrarMapa = null;
 let capaResalte;
 let capaUsuario;
 let alClicParada = () => {};
@@ -18,6 +20,7 @@ let interceptorClicParada = null;
 let capaItinerario;
 let itinerarioVisible = false;
 let forzarParadas = false;
+let recorridoVisible = false;
 let obtenerRelleno = () => 0;
 
 const posiciones = new Map();      // id de parada -> [lat, lng]
@@ -63,9 +66,11 @@ export function iniciar(elemento, opciones = {}) {
     capaRecorrido = L.layerGroup().addTo(mapa);
     capaResalte = L.layerGroup().addTo(mapa);
     capaBuses = L.layerGroup().addTo(mapa);
+    capaBusesVivo = L.layerGroup().addTo(mapa);
     capaUsuario = L.layerGroup().addTo(mapa);
 
     mapa.on("zoomend", ajustarRadios);
+    mapa.on("dragstart", () => alArrastrarMapa?.());
 
     // Leaflet mide el contenedor al crearse; si el layout cambia después (CSS, hoja, ventana), se vuelve a medir
     if ("ResizeObserver" in window) {
@@ -111,7 +116,8 @@ export function pintarParadas(paradas) {
  */
 export function mostrarRecorrido({ color, trazado, paradas = [], ajustar = true }) {
     limpiarRecorrido(false);
-    mapa.removeLayer(capaParadas);
+    recorridoVisible = true;
+    actualizarCapaParadas();
     const c = colorSeguro(color);
     const base = { lineCap: "round", lineJoin: "round", interactive: false };
     capaRecorrido.addLayer(L.polyline(trazado, { ...base, color: "#ffffff", weight: 8, opacity: 1 }));
@@ -123,7 +129,10 @@ export function mostrarRecorrido({ color, trazado, paradas = [], ajustar = true 
 /** Quita el recorrido y devuelve el mapa a la vista con todas las paradas. */
 export function limpiarRecorrido(restaurar = true) {
     capaRecorrido.clearLayers();
-    if (restaurar && !mapa.hasLayer(capaParadas)) capaParadas.addTo(mapa);
+    if (restaurar) {
+        recorridoVisible = false;
+        actualizarCapaParadas();
+    }
 }
 
 /** Resalta una parada (más grande, anillo en tinta). null quita el resalte. */
@@ -258,7 +267,68 @@ export function mostrarTodasParadas(visibles) {
 }
 
 function actualizarCapaParadas() {
-    const ocultar = itinerarioVisible && !forzarParadas;
+    // El recorrido de una línea siempre oculta el resto; el itinerario lo permite si se piden todas
+    const ocultar = recorridoVisible || (itinerarioVisible && !forzarParadas);
     if (ocultar && mapa.hasLayer(capaParadas)) mapa.removeLayer(capaParadas);
     else if (!ocultar && !mapa.hasLayer(capaParadas)) capaParadas.addTo(mapa);
+}
+
+// ---------- Buses en vivo ----------
+
+/** Registra (o quita, con null) lo que ocurre cuando el usuario arrastra el mapa. */
+export function alArrastrar(fn) {
+    alArrastrarMapa = fn;
+}
+
+/** Centra un punto en la zona visible sin cambiar el zoom (para seguir un bus). */
+export function centrarEn(latlng) {
+    const z = mapa.getZoom();
+    const centro = mapa.unproject(mapa.project(latlng, z).add([0, obtenerRelleno() / 2]), z);
+    mapa.panTo(centro, { animate: !reducirMovimiento(), duration: 1, easeLinearity: 1, noMoveStart: true });
+}
+
+const PUNTA_RUMBO = '<svg width="42" height="42" viewBox="0 0 42 42" aria-hidden="true"><path d="M21 0.5 25.5 6.5H16.5Z" fill="currentColor" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+
+/**
+ * Bus en vivo sobre el recorrido: círculo del color de la línea con anillo blanco,
+ * pictograma y punta de rumbo. Devuelve un manejador; solo se anima el transform.
+ */
+export function crearMarcadorBus({ latlng, bus, color, alSeleccionar }) {
+    const c = colorSeguro(color);
+    const marcador = L.marker(latlng, {
+        keyboard: true,
+        zIndexOffset: 1000,
+        icon: L.divIcon({
+            className: "marcador-bus-vivo",
+            html: `<span class="bus-vivo" style="--linea:${c};--tinta-linea:${tintaSobre(c)}"><span class="bus-rumbo">${PUNTA_RUMBO}</span><span class="bus-cuerpo">${icono("bus", { tam: 16 })}</span></span>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+        }),
+    }).addTo(capaBusesVivo);
+    marcador.on("click", () => alSeleccionar(bus));
+
+    const el = marcador.getElement();
+    const rumboEl = el.querySelector(".bus-rumbo");
+    const cuerpo = el.querySelector(".bus-vivo");
+    el.setAttribute("role", "button");
+
+    return {
+        mover(pos, rumbo) {
+            marcador.setLatLng(pos);
+            if (rumbo != null) rumboEl.style.transform = `rotate(${rumbo.toFixed(0)}deg)`;
+        },
+        etiquetar(texto) {
+            el.title = texto;
+            el.setAttribute("aria-label", texto);
+        },
+        seguir(si) {
+            cuerpo.classList.toggle("seguido", si);
+        },
+        atenuar(si) {
+            marcador.setOpacity(si ? 0.45 : 1);
+        },
+        quitar() {
+            capaBusesVivo.removeLayer(marcador);
+        },
+    };
 }
