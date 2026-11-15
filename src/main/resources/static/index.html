@@ -3,48 +3,57 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#14171d">
+    <meta name="theme-color" content="#f1f4f6">
+    <meta name="color-scheme" content="light">
+    <meta name="robots" content="noindex">
+    <meta name="description" content="Tiempos de bus de A Coruña. Proyecto personal no oficial, sin relación con Tranvías de La Coruña.">
     <title>ProyectoBus · Buses de A Coruña</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="preload" as="font" type="font/woff2" href="fuentes/geist-latin.woff2" crossorigin>
+    <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="ruta.css">
 </head>
 <body>
 
-<header class="barra">
-    <div class="marca">
-        <span class="marca-icono">🚌</span>
-        <span>ProyectoBus</span>
-    </div>
-    <div class="buscador">
-        <input id="buscar" type="search" placeholder="Buscar parada…" autocomplete="off">
-        <ul id="resultados" class="resultados" hidden></ul>
-    </div>
-</header>
+<a class="saltar" href="#vista">Saltar al contenido</a>
 
-<nav id="chips" class="chips" aria-label="Líneas"></nav>
+<div class="app">
+    <aside id="panel" class="panel" data-estado="medio">
+        <button id="asa" class="asa" type="button" aria-label="Cambiar tamaño del panel"></button>
 
-<main id="mapa"></main>
+        <header class="marca">
+            <svg class="marca-simbolo" width="28" height="20" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+                <path d="M2 10h8M18 10h8"/>
+                <circle cx="14" cy="10" r="4"/>
+            </svg>
+            <span class="marca-nombre" translate="no">ProyectoBus</span>
+            <span class="marca-lugar">A Coruña</span>
+        </header>
 
-<section id="panel" class="panel" hidden>
-    <div class="panel-asa"></div>
-    <div class="panel-cabecera">
-        <div>
-            <h2 id="panel-titulo">Parada</h2>
-            <p id="panel-sub" class="sub"></p>
+        <div class="buscador">
+            <label class="solo-lectores" for="buscar">Buscar una parada o línea</label>
+            <span class="buscador-icono" aria-hidden="true"></span>
+            <input id="buscar" type="search" name="buscar" autocomplete="off" spellcheck="false"
+                   placeholder="Busca parada o línea: Obelisco, 14…"
+                   role="combobox" aria-expanded="false" aria-controls="resultados" aria-autocomplete="list">
+            <ul id="resultados" class="resultados" role="listbox" aria-label="Resultados de búsqueda" hidden></ul>
+            <p id="resultados-estado" class="resultados resultados-estado" role="status" aria-live="polite"></p>
         </div>
-        <div class="panel-acciones">
-            <button id="btn-fav" class="icono" title="Guardar como favorita">☆</button>
-            <button id="btn-cerrar" class="icono" title="Cerrar">✕</button>
-        </div>
-    </div>
-    <div id="panel-cuerpo" class="panel-cuerpo"></div>
-</section>
 
-<div id="aviso" class="aviso" hidden></div>
+        <nav id="pestanas" class="pestanas" aria-label="Secciones"></nav>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js"></script>
+        <main id="vista" class="vista" tabindex="-1"></main>
+
+        <footer class="pie">Web no oficial, sin relación con Tranvías de La Coruña. Tiempos aproximados. <a href="?vista=aviso">Aviso legal</a></footer>
+    </aside>
+
+    <div id="mapa" class="mapa" role="application" aria-label="Mapa de paradas y recorridos"></div>
+    <p id="aviso-mapa" class="aviso-mapa" role="status" aria-live="polite"></p>
+    <button id="btn-ubicacion" class="btn-ubicacion" type="button" aria-label="Centrar en mi ubicación"></button>
+</div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
