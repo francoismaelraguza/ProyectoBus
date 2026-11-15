@@ -1,6 +1,7 @@
 package com.francoraguza.proyectobus.api;
 
 import com.francoraguza.proyectobus.api.ApiDtos.Catalogo;
+import com.francoraguza.proyectobus.api.ApiDtos.BusesLinea;
 import com.francoraguza.proyectobus.api.ApiDtos.LlegadasParada;
 import com.francoraguza.proyectobus.api.ApiDtos.RecorridoLinea;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,5 +35,11 @@ public class BusController {
     @GetMapping("/lineas/{id}/recorrido")
     public RecorridoLinea recorrido(@PathVariable int id) {
         return service.recorrido(id);
+    }
+
+    /** Buses de una línea ahora mismo: GPS, última parada, estado y avance. */
+    @GetMapping("/lineas/{id}/buses")
+    public BusesLinea buses(@PathVariable int id) {
+        return service.busesLinea(id);
     }
 }

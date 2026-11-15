@@ -26,19 +26,23 @@ public class BusService {
     private final Duration ttlCatalogo;
     private final Duration ttlLlegadas;
     private final Duration ttlRecorridos;
+    private final Duration ttlBusesLinea;
 
     private volatile Cacheado<Catalogo> catalogo;
     private final Map<Integer, Cacheado<LlegadasParada>> llegadas = new ConcurrentHashMap<>();
     private final Map<Integer, Cacheado<RecorridoLinea>> recorridos = new ConcurrentHashMap<>();
+    private final Map<Integer, Cacheado<BusesLinea>> busesLinea = new ConcurrentHashMap<>();
 
     public BusService(ITranviasClient client,
                       @Value("${itranvias.cache.catalogo}") Duration ttlCatalogo,
                       @Value("${itranvias.cache.llegadas}") Duration ttlLlegadas,
-                      @Value("${itranvias.cache.recorridos}") Duration ttlRecorridos) {
+                      @Value("${itranvias.cache.recorridos}") Duration ttlRecorridos,
+                      @Value("${itranvias.cache.buses-linea}") Duration ttlBusesLinea) {
         this.client = client;
         this.ttlCatalogo = ttlCatalogo;
         this.ttlLlegadas = ttlLlegadas;
         this.ttlRecorridos = ttlRecorridos;
+        this.ttlBusesLinea = ttlBusesLinea;
     }
 
     // ---------------- Catálogo ----------------
@@ -233,6 +237,102 @@ public class BusService {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "iTranvías no devolvió recorrido para la línea");
         }
         return new RecorridoLinea(linea.id(), linea.nombre(), linea.color(), sentidos);
+    }
+
+    // ---------------- Buses de una línea ----------------
+
+    public BusesLinea busesLinea(int lineaId) {
+        catalogo().lineas().stream().filter(l -> l.id() == lineaId).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Línea desconocida: " + lineaId));
+
+        Cacheado<BusesLinea> c = busesLinea.get(lineaId);
+        if (c != null && c.vigente(ttlBusesLinea)) {
+            return c.valor();
+        }
+        BusesLinea nuevo = cargarBusesLinea(lineaId);
+        busesLinea.put(lineaId, new Cacheado<>(nuevo, Instant.now()));
+        return nuevo;
+    }
+
+    /** Candidato de func=2: un bus puede salir dos veces (cabecera de un sentido y principio del otro). */
+    private record Candidato(int sentido, Integer ultParada, Integer estado, Double progreso) {
+    }
+
+    private record Gps(int sentido, double lat, double lng) {
+    }
+
+    private BusesLinea cargarBusesLinea(int lineaId) {
+        Map<Integer, Gps> gps = new HashMap<>();
+        Map<Integer, List<Candidato>> candidatos = new HashMap<>();
+        ResponseStatusException falloGps = null;
+        ResponseStatusException falloEstado = null;
+
+        try {
+            MapaRespuesta r = client.mapaLinea(lineaId, "B");
+            if (r != null && r.mapas() != null) {
+                for (MapaBloque bloque : r.mapas()) {
+                    if (bloque == null || bloque.buses() == null) continue;
+                    for (SentidoBusesGpsRaw sb : bloque.buses()) {
+                        Integer s = entero(sb.sentido());
+                        if (s == null || sb.buses() == null) continue;
+                        for (BusGpsRaw b : sb.buses()) {
+                            gps.put(b.bus(), new Gps(s, redondear(b.posy()), redondear(b.posx())));
+                        }
+                    }
+                }
+            }
+        } catch (ResponseStatusException e) {
+            falloGps = e;
+        }
+
+        try {
+            BusesLineaRespuesta r = client.busesLinea(lineaId);
+            if (r != null && r.paradas() != null) {
+                for (SentidoBusesRaw sb : r.paradas()) {
+                    Integer s = entero(sb.sentido());
+                    if (s == null || sb.paradas() == null) continue;
+                    for (ParadaBusesRaw pb : sb.paradas()) {
+                        Integer ult = entero(pb.parada());
+                        if (pb.buses() == null) continue;
+                        for (BusLineaRaw b : pb.buses()) {
+                            candidatos.computeIfAbsent(b.bus(), k -> new ArrayList<>())
+                                    .add(new Candidato(s, ult, b.estado(), b.distancia()));
+                        }
+                    }
+                }
+            }
+        } catch (ResponseStatusException e) {
+            falloEstado = e;
+        }
+
+        if (falloGps != null && falloEstado != null) {
+            throw falloEstado;
+        }
+
+        Set<Integer> numeros = new TreeSet<>();
+        numeros.addAll(gps.keySet());
+        numeros.addAll(candidatos.keySet());
+
+        List<BusEnVivo> buses = new ArrayList<>();
+        for (int n : numeros) {
+            Gps g = gps.get(n);
+            List<Candidato> cands = candidatos.getOrDefault(n, List.of());
+            if (g != null) {
+                // func=99 numera variantes de ruta; el sentido bueno (0/1) es el de func=2, si el bus sale ahí
+                Candidato c = cands.stream().filter(x -> x.sentido() == g.sentido()).findFirst()
+                        .or(() -> cands.stream().filter(x -> x.progreso() != null && x.progreso() < 1).findFirst())
+                        .orElse(cands.isEmpty() ? null : cands.getFirst());
+                buses.add(new BusEnVivo(n, c != null ? c.sentido() : g.sentido(), g.lat(), g.lng(),
+                        c != null ? c.ultParada() : null, c != null ? c.estado() : null,
+                        c != null ? c.progreso() : null));
+            } else {
+                Candidato c = cands.stream().filter(x -> x.progreso() != null && x.progreso() < 1).findFirst()
+                        .orElse(cands.getFirst());
+                buses.add(new BusEnVivo(n, c.sentido(), null, null, c.ultParada(), c.estado(), c.progreso()));
+            }
+        }
+        String consultado = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        return new BusesLinea(lineaId, consultado, buses);
     }
 
     private static List<double[]> parsearTrazado(String texto) {
