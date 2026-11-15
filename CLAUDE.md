@@ -6,7 +6,8 @@ Web de tiempos de bus urbano de A Coruña. Backend Spring Boot que hace de proxy
 
 - **Subagentes obligatorios.** Leer y buscar archivos del proyecto → subagente con modelo **Haiku 5.5** (`Explore`, `model: haiku`). Escribir código → subagente con modelo **Sonnet 5.5** (`general-purpose`, `model: sonnet`). La sesión principal solo decide, redacta el encargo, verifica y hace los commits.
 - **Skills de diseño.** Cualquier cambio de interfaz pasa por `design-taste-frontend` (rama de *app screens*) y se audita con `web-design-guidelines`.
-- **Ramas.** Nada directo a `main`. El rebuild vive en `rebuild/interfaz`; cada funcionalidad nueva en su `feature/*`, que sale de `rebuild/interfaz`.
+- **Ramas (Git Flow).** `main` = lo publicado; `develop` = integración (rama por defecto en GitHub). Todo trabajo va en `feature/<nombre>` que sale de `develop` y vuelve por pull request con merge commit (nunca squash ni rebase). A `main` solo se llega por PR desde `release/X.Y.Z` o `hotfix/X.Y.Z`, con tag `vX.Y.Z`. Nada de commits directos en `main` ni en `develop` (están protegidas: PR obligatorio y CI `build` en verde).
+- **Pull requests.** Si la rama choca con `develop`, se trae `develop` a la feature (`git merge origin/develop`), se resuelve y se prueba ahí; solo entonces se fusiona el PR. No fusionar con el CI en rojo. La release a `main` la decide el usuario: no hacerla sin que lo pida.
 - **Idioma.** Código, comentarios, commits y textos de la interfaz en español.
 - Este archivo es el seguimiento del proyecto: actualiza la tabla de estado al cerrar cada tarea.
 
@@ -39,7 +40,7 @@ Cachés (en `application.properties`): catálogo y recorridos 12 h, llegadas 15 
 
 ## API de iTranvías (lo que no es obvio)
 
-Base `https://itranvias.com/queryitr_v3.php`. Necesita `User-Agent` de navegador y `Referer: https://itranvias.com/`.
+Base `https://itranvias.com/queryitr_v3.php`. No exige `User-Agent` de navegador ni `Referer` (comprobado el 2026-11-15): el backend manda el suyo propio.
 
 | Llamada | Qué devuelve |
 |---|---|
@@ -72,17 +73,33 @@ Hoja repartida por `design-taste-frontend` (`draw.mjs --app`, semilla 426413680)
 
 ## Estado
 
+Repositorio: <https://github.com/francoismaelraguza/ProyectoBus> (público, sin licencia por ahora). Versión en `pom.xml`: 0.1.0; la primera release prevista es la 0.2.0.
+
 | Rama | Qué contiene | Estado |
 |---|---|---|
-| `main` | Primera versión (tema oscuro, un solo `app.js`) | Base |
-| `rebuild/interfaz` | Interfaz nueva (módulos ES), recorrido por calles (`/api/lineas/{id}/recorrido`), favoritas con llegadas, cerca de ti | Hecho, sin fusionar |
-| `feature/bus-en-vivo` | `/api/lineas/{id}/buses` + `envivo.js`: buses deslizándose por el trazado, seguir un bus | Hecho, sin fusionar |
-| `feature/planificador-ruta` | `/api/ruta` (`PlanificadorService`, Dijkstra con trasbordos y tramos a pie) + pestaña «Ruta» | Hecho, sin fusionar |
+| `main` | Primera versión (tema oscuro, un solo `app.js`) | Publicada, sin tocar |
+| `develop` | Rebuild + buses en vivo + planificador + avisos legales + CI | Integrado y verificado |
+| `rebuild/interfaz`, `feature/bus-en-vivo`, `feature/planificador-ruta`, `feature/flujo-git`, `feature/avisos-legales`, `feature/seguimiento` | Ya fusionadas en `develop` (PR 1 a 6) | Borrar tras la release 0.2.0 |
 
-Orden de fusión previsto: `rebuild/interfaz` → `main`; después las dos `feature/*` (ambas tocan `mapa.js`, `vistas/parada.js`, `BusController`, `ApiDtos` y `README.md`: habrá conflictos pequeños que resolver a mano en la segunda).
+### Release pendiente (0.2.0)
+
+1. `release/0.2.0` desde `develop`: subir `pom.xml` a 0.2.0.
+2. PR `release/0.2.0` → `main` con merge commit.
+3. Tag anotado `v0.2.0` en `main` y `gh release create v0.2.0`.
+4. PR `main` → `develop` para devolver la release.
+5. Borrar `release/0.2.0` y las ramas ya integradas (local y remoto).
+
+## Avisos legales (decisiones tomadas)
+
+- La web se declara no oficial y sin relación con la Compañía de Tranvías de La Coruña ni el Concello: pie del panel, vista `?vista=aviso`, README y `noindex`.
+- El aviso legal de Tranvías exige autorización previa para reproducir sus contenidos y prohíbe el uso comercial. El descargo no es un permiso: antes de desplegar para el público hay que pedirlo (`correo@tranviascoruna.com`). Sin publicidad ni ingresos.
+- Contacto para corrección o retirada: las issues del repositorio.
+- Terceros en el navegador: solo las teselas de CARTO (clave propia, uso no comercial, atribución a OpenStreetMap y CARTO). Leaflet y Geist van alojados en `static/vendor/` y `static/fuentes/` con sus licencias: no volver a cargarlos de un CDN.
+- El backend se identifica ante iTranvías con `itranvias.user-agent` (`ProyectoBus/…`), sin `Referer` falso.
 
 ## Pendiente / ideas
 
 - Planificador: los tiempos de viaje son estimados por distancia (4,5 m/s + 20 s por parada); solo la espera del primer bus es real.
 - Bus en vivo: hasta el segundo sondeo (8 s) el bus no se mueve, porque aún no hay velocidad medida.
-- Desplegarlo (ojo al 403 desde la nube).
+- Desplegarlo (ojo al 403 desde la nube, y pedir antes la autorización a Tranvías).
+- Comprobar si el Punto de Acceso Nacional de transporte publica el GTFS oficial de A Coruña (paradas y líneas como datos abiertos).

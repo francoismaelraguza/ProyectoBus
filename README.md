@@ -192,6 +192,22 @@ src/main/resources/
 src/test/java/…/api/PlanificadorServiceTest.java   # pruebas del planificador con un catálogo sintético
 ```
 
+## Flujo de ramas
+
+El proyecto sigue Git Flow con pull requests:
+
+| Rama | Sale de | Vuelve a | Para qué |
+|---|---|---|---|
+| `main` | — | — | Lo publicado. Cada entrada lleva un tag `vX.Y.Z`. |
+| `develop` | `main` | — | Integración. Es la rama por defecto. |
+| `feature/<nombre>` | `develop` | `develop` | Una funcionalidad o cambio. |
+| `release/X.Y.Z` | `develop` | `main` y `develop` | Preparar una versión. |
+| `hotfix/X.Y.Z` | `main` | `main` y `develop` | Arreglo urgente de lo publicado. |
+
+- `main` y `develop` están protegidas: solo se entra por pull request y con el CI (`mvn verify`) en verde.
+- Los PR se fusionan con merge commit, para que el historial conserve cada rama.
+- Si una feature choca con `develop`, se trae `develop` a la feature, se resuelve ahí y después se fusiona.
+
 ## Ideas para seguir
 
 - [ ] Situar el bus entre paradas usando la `distancia` sobre el recorrido (p. ej. con `turf.along`), en vez de sobre su última parada.
